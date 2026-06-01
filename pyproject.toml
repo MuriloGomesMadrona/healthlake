@@ -1,0 +1,25 @@
+[project]
+name = "murilo"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "MuriloGomesMadrona",email = "murilogomesmadrona01@gmail.com"}
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pyspark (>=4.1.2,<5.0.0)",
+    "mlflow (>=3.12.0,<4.0.0)",
+    "xgboost (>=3.2.0,<4.0.0)",
+    "scikit-learn (>=1.8.0,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.3,<10.0.0)",
+    "ruff (>=0.15.15,<0.16.0)"
+]
