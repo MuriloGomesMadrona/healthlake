@@ -1,118 +1,119 @@
-# 🏥 HealthLake — Predição de Readmissão Hospitalar
+# 🏥 HealthLake — Hospital Readmission Prediction
 
-Pipeline de dados completo no Databricks Lakehouse para predição de readmissão hospitalar em 30 dias, usando dados públicos do dataset *Diabetes 130-US Hospitals*.
-
----
-
-## Sobre o projeto
-
-Este projeto simula um caso real de engenharia de dados em healthtech: dados brutos de internações hospitalares são ingeridos, limpos, validados e transformados em features para um modelo preditivo de machine learning.
-
-**Problema:** dado o histórico de um paciente internado por diabetes, qual a probabilidade de ele ser readmitido em menos de 30 dias após a alta?
-
-**Por que isso importa:** readmissões precoces custam bilhões ao sistema de saúde e indicam falhas no tratamento. Prever esse risco permite intervenções preventivas.
+Full data pipeline on Databricks Lakehouse for predicting hospital readmission within 30 days, using public data from the *Diabetes 130-US Hospitals* dataset.
 
 ---
 
-## Arquitetura
+## About
+
+This project simulates a real-world data engineering scenario in healthtech: raw hospital admission records are ingested, cleaned, validated, and transformed into features for a predictive machine learning model.
+
+**Problem:** given the medical history of a diabetic patient, what is the probability of readmission within 30 days of discharge?
+
+**Why it matters:** early readmissions cost billions to healthcare systems and indicate failures in treatment. Predicting this risk enables preventive interventions.
+
+---
+
+## Architecture
 
 ```
-Fonte (CSV)
+Source (CSV)
     │
     ▼
-[Bronze] — dado bruto, imutável, salvo em Delta Lake
+[Bronze] — raw data, immutable, saved as Delta Lake
     │
     ▼
-[Silver] — limpeza, tipagem, validação de qualidade
+[Silver] — cleaning, typing, data quality validation
     │
     ▼
-[Gold]   — feature engineering, tabela pronta para ML
+[Gold]   — feature engineering, ML-ready table
     │
     ▼
-[ML]     — treinamento XGBoost + tracking com MLflow
+[ML]     — XGBoost training + MLflow tracking
 ```
 
-> Em produção, esta arquitetura usaria Auto Loader (ingestão incremental), Delta Live Tables (pipelines declarativos) e Unity Catalog (governança e lineage). Essas features foram omitidas por limitação do Databricks Community Edition.
+> In production, this architecture would use Auto Loader (incremental ingestion), Delta Live Tables (declarative pipelines), and Unity Catalog (governance and lineage). These features were omitted due to Databricks Community Edition limitations.
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |---|---|
-| Plataforma | Databricks Community Edition |
-| Armazenamento | Delta Lake |
-| Transformações | PySpark |
-| Qualidade de dados | Great Expectations |
+| Platform | Databricks Community Edition |
+| Storage | Delta Lake |
+| Transformations | PySpark |
+| Data Quality | Manual assertions with PySpark |
 | Machine Learning | XGBoost + scikit-learn |
-| Tracking de experimentos | MLflow |
-| Testes | pytest |
+| Experiment Tracking | MLflow |
+| Testing | pytest |
 | Linting | ruff |
 | CI/CD | GitHub Actions |
-| Gerenciamento de deps | Poetry |
+| Dependency Management | Poetry |
 
 ---
 
 ## Dataset
 
 **Diabetes 130-US Hospitals (1999–2008)**
-- Fonte: [Kaggle](https://www.kaggle.com/datasets/jimschacko/diabetic-patients-readmission-prediction)
-- ~100.000 registros de internações hospitalares
-- Features: diagnósticos (CID), medicamentos, tempo de internação, número de procedimentos, etc.
-- Target: `readmitted` — se o paciente voltou em `<30` dias, `>30` dias, ou `NO`
+- Source: [Kaggle](https://www.kaggle.com/datasets/saurabhtayal/diabetic-patients-readmission-prediction)
+- ~100,000 hospital admission records
+- Features: diagnoses (ICD codes), medications, time in hospital, number of procedures, etc.
+- Target: `readmitted` — whether the patient returned in `<30` days, `>30` days, or `NO`
 
 ---
 
-## Estrutura do repositório
+## Repository Structure
 
 ```
 healthlake/
 ├── data/
-│   └── raw/                        # CSV original (não versionado)
+│   └── raw/                        # Original CSV (not versioned)
 ├── notebooks/
-│   ├── 01_bronze.py                # Ingestão do CSV → Delta
-│   ├── 02_silver.py                # Limpeza e validação
+│   ├── 01_bronze.py                # CSV ingestion → Delta
+│   ├── 02_silver.py                # Cleaning and validation
 │   ├── 03_gold.py                  # Feature engineering
-│   └── 04_ml.py                    # Treinamento e MLflow
+│   └── 04_ml.py                    # Training and MLflow
 ├── src/
 │   ├── __init__.py
 │   └── transformations/
 │       ├── __init__.py
-│       └── cleaning.py             # Funções PySpark reutilizáveis e testáveis
+│       └── cleaning.py             # Reusable and testable PySpark functions
 ├── tests/
-│   └── test_cleaning.py            # Testes unitários com pytest
+│   └── test_cleaning.py            # Unit tests with pytest
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                  # Lint + testes automáticos no push
+│       └── ci.yml                  # Lint + tests on every push
 ├── .gitignore
-├── pyproject.toml                  # Dependências via Poetry
+├── pyproject.toml                  # Dependencies via Poetry
 └── README.md
 ```
 
 ---
 
-## Como executar localmente (testes e linting)
+## How to Run Locally (tests and linting)
 
-### Pré-requisitos
+### Prerequisites
 
-- Python 3.10+
+- Python 3.13+
+- Java 17+
 - [Poetry](https://python-poetry.org/docs/#installation)
 
-### Instalação
+### Setup
 
 ```bash
-git clone https://github.com/seu-usuario/healthlake.git
+git clone https://github.com/MuriloGomesMadrona/healthlake.git
 cd healthlake
 poetry install
 ```
 
-### Rodar os testes
+### Run tests
 
 ```bash
 poetry run pytest tests/ -v
 ```
 
-### Rodar o linter
+### Run linter
 
 ```bash
 poetry run ruff check src/ tests/
@@ -120,61 +121,56 @@ poetry run ruff check src/ tests/
 
 ---
 
-## Como executar no Databricks
+## How to Run on Databricks
 
-### 1. Faça upload do dataset
+### 1. Upload the dataset
 
-No Databricks Community Edition:
-1. Acesse **Data → Add Data → Upload File**
-2. Faça upload do arquivo `diabetic_data.csv`
-3. O arquivo ficará disponível em `/FileStore/tables/diabetic_data.csv`
+1. Go to **Catalog → Create Volume** named `healthlake`
+2. Upload `diabetic_data.csv` and `IDs_mapping.csv` to the volume
+3. Files will be available at `/Volumes/workspace/default/healthlake/`
 
-### 2. Importe os notebooks
+### 2. Import the notebooks
 
-1. No menu lateral, clique em **Workspace**
-2. Clique em **Import**
-3. Importe cada arquivo `.py` da pasta `notebooks/` na ordem numérica
+1. In the sidebar, click **Workspace**
+2. Click **Import**
+3. Import each `.py` file from the `notebooks/` folder in numerical order
 
-### 3. Anexe um cluster
-
-1. Crie um cluster em **Compute → Create Cluster** (configurações padrão)
-2. Abra cada notebook e selecione o cluster criado no topo da página
-
-### 4. Execute na ordem
+### 3. Run in order
 
 ```
 01_bronze.py → 02_silver.py → 03_gold.py → 04_ml.py
 ```
 
-Cada notebook gera uma tabela Delta que o próximo consome. Não pule etapas.
+Each notebook generates a Delta table consumed by the next. Do not skip steps.
 
 ---
 
-## Resultados do modelo
+## Model Results
 
-| Métrica | Valor |
+| Metric | Value |
 |---|---|
-| AUC-ROC | *preencher após treinar* |
-| F1-Score (classe <30d) | *preencher após treinar* |
-| Acurácia | *preencher após treinar* |
+| AUC-ROC | 0.6340 |
+| F1-Score (class <30d) | 0.2520 |
+| Accuracy | 0.65 |
+| Recall (class <30d) | 0.52 |
 
-Os experimentos ficam registrados no MLflow, acessível em **Experiments** no menu do Databricks.
-
----
-
-## Decisões técnicas
-
-**Por que PySpark e não pandas?**
-Pandas carrega tudo na memória de uma máquina. PySpark distribui o processamento — padrão em ambientes de dados reais com volumes grandes. Mesmo em datasets pequenos, usar PySpark demonstra que o código escala.
-
-**Por que separar `src/` dos notebooks?**
-Notebooks são ótimos para exploração, mas péssimos para reuso e testes. Funções reutilizáveis vivem em `src/`, são importadas nos notebooks e testadas com pytest — assim como código de software convencional.
-
-**Por que Delta Lake e não Parquet puro?**
-Delta adiciona transações ACID, versionamento e schema enforcement sobre Parquet. É o padrão de fato em Databricks e a base do conceito de Lakehouse.
+Experiments are tracked in MLflow, accessible under **Experiments** in the Databricks sidebar.
 
 ---
 
-## Autor
+## Technical Decisions
 
-Feito por [seu nome] como projeto de portfólio em engenharia de dados.
+**Why PySpark instead of pandas?**
+Pandas loads everything into a single machine's memory. PySpark distributes processing — the standard in real data environments with large volumes. Even on small datasets, using PySpark demonstrates that the code scales.
+
+**Why separate `src/` from notebooks?**
+Notebooks are great for exploration but poor for reuse and testing. Reusable functions live in `src/`, are imported into notebooks, and tested with pytest — just like conventional software code.
+
+**Why Delta Lake instead of plain Parquet?**
+Delta adds ACID transactions, versioning, and schema enforcement on top of Parquet. It is the de facto standard in Databricks and the foundation of the Lakehouse concept.
+
+---
+
+## Author
+
+Built by Murilo Gomes Madrona as a data engineering portfolio project.
